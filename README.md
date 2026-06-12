@@ -6,11 +6,11 @@ Repositorio que contiene los códigos para el ajuste, validación e interpretaci
 
 ## Modelos
 
-| Modelo | Validación | Archivo |
-|---|---|---|
-| Regresión Logística | Validación cruzada | `MÓDULO 2` |
-| Random Forest | Validación cruzada anidada | `MÓDULO 3` |
-| XGBoost | Validación cruzada anidada | `MÓDULO 4` |
+| Descripción  | Archivo |
+|---|---|
+| Códigos que contiene todas las fuciones básicas creadas y necesarias (además de la carga de librerias) para el correcto fucionamiento de los códigos restantes | `Funciones base.R` |
+| Código que genera la base final unificada  | `Base [TDG].R` |
+| Código de reporte de todos los resutlados del trabajo de grado | `Reporte [TDG] .R` |
 
 ---
 
