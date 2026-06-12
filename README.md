@@ -1,10 +1,10 @@
-# Modelos de Clasificación — TDG
+# Códigos — TDG
 
-Repositorio que contiene los códigos para el ajuste, validación e interpretación de los modelos.
+Repositorio que contiene TODOS los códigos del trabajo de grado.
 
 ---
 
-## Modelos
+## Archivos
 
 | Descripción  | Archivo |
 |---|---|
