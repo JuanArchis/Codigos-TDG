@@ -387,6 +387,8 @@ Modelo_logit.1.Imput.final <- with(data = Base_F_2_Impu.2,
 expr = glm(Adop_Pronósticos ~ Región+Edad_P+Genero_P+Escolaridad_P_Cat+F2+HH_size+Educación_Hogar+F7_M+F11+F12+F16+F17_log+Irrigation_system+L1+K1+              
 +org_member+received_training+J4+E1+E2+índice_Activos+Cultivo,family = binomial(link = "logit")))
 
+D3(Modelo_logit.1.Imput, Modelo_logit.1.Imput.final)
+
 # Df de mapeo de nombres:
 term <- c("(Intercept)","RegiónLlanos","RegiónAndina","Edad_P","Genero_PMujer","Escolaridad_P_CatSecundaria","Escolaridad_P_CatTerciaría","F2","HH_size","Educación_Hogar","F7_MSí","F11Sí","F12Sí","F16","F17_log","Irrigation_systemSí","L1Sí","K1Sí","org_memberSí","received_trainingSí","J4Sí","E1Sí","E2Sí","índice_Activos","CultivoMaíz")
 Variable <- c("(Intercept)","Región: Llanos","Región: Andina","Edad del productor","Género: Mujer","Escolaridad del P: Secundaria","Escolaridad del P: Terciaría","Experiencia del productor","Tamaño del hogar","Años promedio de educación del hogar","Siembra mecanizada: Sí","Semilla certificada: Sí","Pérdida de cosecha: Sí","Rendimiento","$Log(Venta+1)$","Riego: Sí","Crédito: Sí","Otros ingresos : Sí","Miembro de alguna organización: Sí","Recibió capacitaciones: Sí","Asistió a (MTA): Sí","Afectaciones: Sí","Estrategias:Sí","Índice de activos","Cultivo: Maíz")
@@ -637,24 +639,37 @@ min.node.size = c(1, 5, 10, 20, 50, 75, 100, 150),max.depth = c(5, 10, 15, 20, 3
 # CICLO EXTERNO DE LA NCV #
 # - - - - - - - - - - - - #
 
-for(k in seq_along(folds_outer)){
+for (k in seq_along(folds_outer)) {
   
   cat("\n=========== FOLD EXTERNO:", k, "===========\n")
   
-  test_idx   <- folds_outer[[k]]
-  ignore_vec <- rep(FALSE, nrow(Base_F_2_Impu.2$data))
+  test_idx <- folds_outer[[k]]
+  
+  # se guarda la Y real de test ANTES de ignorarla-- #
+  y_test_real <- data_raw$Adop_Pronósticos[test_idx]
+  
+  # se deja para el df de test Y como si fuera NA -- #
+  data_fold <- data_raw
+  data_fold$Adop_Pronósticos[test_idx] <- NA
+  
+  # Se exclenyen los datos de validacion en la imputacion de prueba
+  ignore_vec <- rep(FALSE, nrow(data_fold))
   ignore_vec[test_idx] <- TRUE
   
-  imp_k <- mice(data= Base_F_2_Impu.2$data,m= Base_F_2_Impu.2$m,ignore= ignore_vec,
-  method= Base_F_2_Impu.2$method,predictorMatrix = Base_F_2_Impu.2$predictorMatrix,
-  maxit= 10,seed= 1,printFlag= FALSE)
+  imp_k <- mice(data = data_fold, m = Base_F_2_Impu.2$m, ignore = ignore_vec,
+                method = method_base, predictorMatrix = Base_F_2_Impu.2$predictorMatrix,
+                maxit = 10, seed = 1, printFlag = FALSE)
   
-  for(i in 1:imp_k$m){
+  for (i in 1:imp_k$m) {
     
     cat("  Imputación:", i, "\n")
     
     data_i <- complete(imp_k, i)
-    data_i$Adop_Pronósticos <- factor(data_i$Adop_Pronósticos, levels = c("No","Sí"))
+    
+    # --  restaurar la Y real de test, descartando la que mice haya inventado -- #
+    
+    data_i$Adop_Pronósticos[test_idx] <- y_test_real
+    data_i$Adop_Pronósticos <- factor(data_i$Adop_Pronósticos, levels = c("No", "Sí"))
     
     train_outer <- data_i[-test_idx, ]
     test_outer  <- data_i[test_idx,  ]
@@ -662,7 +677,7 @@ for(k in seq_along(folds_outer)){
     y_train_num <- as.numeric(train_outer$Adop_Pronósticos == "Sí")
     y_test_num  <- as.numeric(test_outer$Adop_Pronósticos  == "Sí")
     
-    # brier SCORE DE REFERENCIA (Para el BSS) 
+    # brier SCORE DE REFERENCIA (Para el BSS)
     brier_null_train <- mean(y_train_num) * (1 - mean(y_train_num))
     brier_null_test  <- mean(y_test_num)  * (1 - mean(y_test_num))
     
